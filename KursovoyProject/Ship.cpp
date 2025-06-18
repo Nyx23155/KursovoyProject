@@ -21,30 +21,13 @@ int Ship::getHealth() const
 	return health;
 }
 
-void Ship::hit()
-{
-	if (health  > 0)
-	{
-		health--;
-	}
+void Ship::hit() {
+	if (health > 0) health--;
+}
+bool Ship::isSunk() const {
+	return health == 0;
 }
 
-
-bool Ship::isSunk() const
-{
-	if (ship == nullptr)
-	{
-		return true;
-	}
-	else if (health == 0)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
 
 void Ship::setCoordinates(const vector<pair<int, int>>& coords)
 {

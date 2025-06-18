@@ -17,5 +17,6 @@ public:
 
 private:  
    static const int size = 10;  
-   char board[size][size];  
+   char board[size][size];
+   vector <Ship*> ships;
 };
