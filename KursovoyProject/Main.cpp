@@ -111,47 +111,63 @@ int main()
 
     bool gameOver = false;
     while (!gameOver) {
-        // Хід гравця
-        cout << "----------------------------------------" << endl;
-        cout << "Your turn!" << endl;
-        npcBoard.printBoard();
-        printLegend();
-        int x, y;
-        cout << "Enter X coordinate (0-9): ";
-        cin >> x;
-        cout << "Enter Y coordinate (0-9): ";
-        cin >> y;
+        // Хід гравця - продовжуємо доки не промажемо
+        bool playerHit = true;
+        while (playerHit && !gameOver) {
+            cout << "----------------------------------------" << endl;
+            cout << "Your turn!" << endl;
+            npcBoard.printBoardHidden();
+            printLegend();
+            int x, y;
+            cout << "Enter X coordinate (0-9): ";
+            cin >> x;
+            cout << "Enter Y coordinate (0-9): ";
+            cin >> y;
 
-        bool hit = npcBoard.shoot(x, y);
-        if (hit) {
-            cout << "Result: Hit!" << endl;
-            if (npcBoard.isSunk(x, y)) {
-                cout << "Result: Ship sunk!" << endl;
-                // Корабель вже позначено як потоплений у методі shoot()
+            playerHit = npcBoard.shoot(x, y);
+            if (playerHit) {
+                cout << "Result: Hit!" << endl;
+                if (npcBoard.isSunk(x, y)) {
+                    cout << "Result: Ship sunk!" << endl;
+                    // Корабель вже позначено як потоплений у методі shoot()
+                }
+                cout << "You hit! Take another shot!" << endl;
+            }
+            else {
+                cout << "Result: Miss!" << endl;
+            }
+
+            // Перевірка, чи всі кораблі комп'ютера потоплені
+            if (npcBoard.allShipsSunk()) {
+                cout << "Congratulations! You win!" << endl;
+                gameOver = true;
+                break;
             }
         }
-        else {
-            cout << "Result: Miss!" << endl;
-        }
 
-        // Перевірка, чи всі кораблі комп'ютера потоплені
-        if (npcBoard.allShipsSunk()) {
-            cout << "Congratulations! You win!" << endl;
-            gameOver = true;
-            break;
-        }
+        if (gameOver) break;
 
-        // Хід комп'ютера
-        cout << "----------------------------------------" << endl;
-        cout << "Computer's turn!" << endl;
-        npc.makeMove();
-        playerBoard.printBoard();
-        printLegend();
+        // Хід комп'ютера - продовжуємо доки не промажемо
+        bool npcHit = true;
+        while (npcHit && !gameOver) {
+            cout << "----------------------------------------" << endl;
+            cout << "Computer's turn!" << endl;
 
-        // Перевірка, чи всі кораблі гравця потоплені
-        if (playerBoard.allShipsSunk()) {
-            cout << "Sorry, you lose!" << endl;
-            gameOver = true;
+            // Робимо хід комп'ютера і отримуємо результат
+            npcHit = npc.makeMove();
+
+            playerBoard.printBoard();
+            printLegend();
+
+            if (npcHit) {
+                cout << "Computer hit! Computer takes another shot!" << endl;
+            }
+
+            // Перевірка, чи всі кораблі гравця потоплені
+            if (playerBoard.allShipsSunk()) {
+                cout << "Sorry, you lose!" << endl;
+                gameOver = true;
+            }
         }
     }
 

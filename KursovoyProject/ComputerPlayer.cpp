@@ -16,7 +16,7 @@ ComputerPlayer::ComputerPlayer(Board* board) {
     random_shuffle(availableShots.begin(), availableShots.end());
 }
 
-void ComputerPlayer::makeMove() {
+bool ComputerPlayer::makeMove() {
     pair<int, int> target;
     bool targetFound = false;
 
@@ -40,7 +40,7 @@ void ComputerPlayer::makeMove() {
 
     if (!targetFound) {
         cout << "No available targets!" << endl;
-        return;
+        return false;
     }
 
     int x = target.first;
@@ -79,6 +79,8 @@ void ComputerPlayer::makeMove() {
 
     // Видаляємо використану ціль із доступних пострілів
     removeFromAvailableShots(x, y);
+
+    return hit; // Повертаємо результат пострілу
 }
 
 void ComputerPlayer::placeShipsRandomly(Board& board, vector<Ship*>& npcShips) {

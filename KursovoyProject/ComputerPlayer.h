@@ -22,5 +22,5 @@ private:
 public:
     ComputerPlayer(Board* board);
     void placeShipsRandomly(Board& board, vector<Ship*>& npcShips);
-    void makeMove();
+    bool makeMove();
 };

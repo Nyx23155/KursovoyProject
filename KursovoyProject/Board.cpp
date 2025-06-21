@@ -32,6 +32,27 @@ void Board::printBoard() {
     }
 }
 
+void Board::printBoardHidden() {
+	// Вивід ігрового поля з прихованими кораблями
+	cout << "  ";
+	for (int i = 0; i < size; i++) {
+		cout << i << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < size; i++) {
+		cout << i << " ";
+		for (int j = 0; j < size; j++) {
+			if (board[i][j] == 'S') {
+				cout << '.' << " "; // Приховуємо кораблі
+			}
+			else {
+				cout << board[i][j] << " ";
+			}
+		}
+		cout << endl;
+	}
+}
+
 Ship* Board::findShipByCoordinates(int x, int y) {
     if (x < 0 || x >= size || y < 0 || y >= size) {
         cout << "Coordinates (" << x << ", " << y << ") are out of bounds." << endl;

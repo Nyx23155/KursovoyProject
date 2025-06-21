@@ -6,7 +6,8 @@ class Board
 {  
 public:  
    Board();  
-   void printBoard();  
+   void printBoard();
+   void printBoardHidden();
    bool shoot(int x, int y);  
    bool setShip(Ship* ship, int x, int y, bool horizontal, bool isPlayer);
    Ship* findShipByCoordinates(int x, int y);
