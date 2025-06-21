@@ -112,7 +112,6 @@ void Board::markSunkShip(Ship* ship) {
        return true;
    }
    
-
    bool Board::setShip(Ship* ship, int x, int y, bool horizontal, bool isPlayer) {
        int shipSize = ship->getSize();
        bool isPlayerShip = isPlayer;
