@@ -55,12 +55,12 @@ int main()
     cout << "Enter coordinates as numbers from 0 to 9." << endl;
     cout << "Good luck!" << endl << endl;
 
-    // Place NPC ships
+    // Розміщення кораблів комп'ютера
     ComputerPlayer npc(&playerBoard);
     npc.placeShipsRandomly(npcBoard, npcShips);
     cout << "Computer has placed its ships." << endl << endl;
 
-    // Player chooses ship placement method
+    // Гравець обирає спосіб розміщення кораблів
     cout << "Choose how your ships will be placed:" << endl;
     cout << "1 - Manual" << endl;
     cout << "2 - Random" << endl;
@@ -68,7 +68,7 @@ int main()
     cin >> placementChoice;
 
     if (placementChoice == 2) {
-        ComputerPlayer playerPlacer(&npcBoard); // board not used, just for interface
+        ComputerPlayer playerPlacer(&npcBoard); // дошка не використовується, лише для інтерфейсу
         playerPlacer.placeShipsRandomly(playerBoard, playerShips);
         cout << "Your ships have been placed randomly!" << endl;
         playerBoard.printBoard();
@@ -111,7 +111,7 @@ int main()
 
     bool gameOver = false;
     while (!gameOver) {
-        // Player's turn
+        // Хід гравця
         cout << "----------------------------------------" << endl;
         cout << "Your turn!" << endl;
         npcBoard.printBoard();
@@ -125,37 +125,37 @@ int main()
         bool hit = npcBoard.shoot(x, y);
         if (hit) {
             cout << "Result: Hit!" << endl;
-            Ship* ship = npcBoard.findShipByCoordinates(x, y);
-            if (ship && ship->isSunk()) {
+            if (npcBoard.isSunk(x, y)) {
                 cout << "Result: Ship sunk!" << endl;
+                // Корабель вже позначено як потоплений у методі shoot()
             }
         }
         else {
             cout << "Result: Miss!" << endl;
         }
 
-        // Check if all NPC ships are sunk
+        // Перевірка, чи всі кораблі комп'ютера потоплені
         if (npcBoard.allShipsSunk()) {
             cout << "Congratulations! You win!" << endl;
             gameOver = true;
             break;
         }
 
-        // NPC's turn
+        // Хід комп'ютера
         cout << "----------------------------------------" << endl;
         cout << "Computer's turn!" << endl;
         npc.makeMove();
         playerBoard.printBoard();
         printLegend();
 
-        // Check if all player ships are sunk
+        // Перевірка, чи всі кораблі гравця потоплені
         if (playerBoard.allShipsSunk()) {
             cout << "Sorry, you lose!" << endl;
             gameOver = true;
         }
     }
 
-    // Memory cleanup
+    // Очищення пам'яті
     for (Ship* ship : playerShips) {
         delete ship;
     }

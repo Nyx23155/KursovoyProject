@@ -16,7 +16,7 @@ Board::Board()
 }
 
 void Board::printBoard() {
-    // Вывод игровой доски на экран
+    // Вивід ігрового поля на екран
     cout << "  ";
     for (int i = 0; i < size; i++) {
         cout << i << " ";
@@ -53,51 +53,57 @@ Ship* Board::findShipByCoordinates(int x, int y) {
 bool Board::isSunk(int x, int y) {
     Ship* ship = findShipByCoordinates(x, y);
     if (!ship) {
-        return false; // Нет корабля в этой клетке
+        return false; // Немає корабля в цій клітинці
     }
     return ship->isSunk();
 }
 
 bool Board::shoot(int x, int y) {
-    // Проверка границ поля
+    // Перевірка меж поля
     if (x < 0 || x >= size || y < 0 || y >= size) {
-        return false; // Мимо (или можно выбросить исключение)
+        return false;
     }
 
-    // Проверяем, уже ли стреляли в эту клетку
-    if (board[x][y] == 'X' || board[x][y] == '*') {
-        // Уже стреляли сюда, считаем как промах
-        return false;
+    // Перевіряємо, чи вже стріляли в цю клітинку
+    if (board[y][x] == 'X' || board[y][x] == '*' || board[y][x] == '#' || board[y][x] == 'O') {
+        return false; // Вже стріляли сюди
     }
 
     Ship* ship = findShipByCoordinates(x, y);
     if (ship) {
         ship->hit();
-        board[x][y] = 'X'; // Обозначаем попадание
-        return true; // Попадание
+        board[y][x] = 'X'; // Позначаємо влучання
+
+        // ДОДАНО: Перевіряємо, чи потоплений корабель
+        if (ship->isSunk()) {
+            markSunkShip(ship);
+            cout << "Ship sunk!" << endl;
+        }
+
+        return true; // Влучання
     }
     else {
-        board[x][y] = '*'; // Обозначаем промах
-        return false; // Мимо
+        board[y][x] = '*'; // Позначаємо промах
+        return false; // Промах
     }
 }
 
 void Board::markSunkShip(Ship* ship) {
     const vector<pair<int, int>>& coords = ship->getCoordinates();
 
-    // Отмечаем все клетки корабля как потопленные
+    // Позначаємо всі клітинки корабля як потоплені
     for (const auto& coord : coords) {
         int x = coord.first;
         int y = coord.second;
-        board[y][x] = '#'; // Или другой символ для потопленного корабля
+        board[y][x] = '#'; // Потоплений корабель
 
-        // Отмечаем клетки вокруг корабля как промахи
+        // Позначаємо клітинки навколо корабля як промахи
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 int nx = x + dx;
                 int ny = y + dy;
                 if (nx >= 0 && nx < size && ny >= 0 && ny < size &&
-                    (board[ny][nx] == '.' || board[ny][nx] == ' ')) {
+                    board[ny][nx] == '.') { // Тільки порожні клітинки
                     board[ny][nx] = 'O';
                 }
             }
@@ -105,70 +111,69 @@ void Board::markSunkShip(Ship* ship) {
     }
 }
 
-   bool Board::allShipsSunk() const {
-       for (const Ship* ship : ships) {
-           if (!ship->isSunk()) return false;
-       }
-       return true;
-   }
-   
-   bool Board::setShip(Ship* ship, int x, int y, bool horizontal, bool isPlayer) {
-       int shipSize = ship->getSize();
-       bool isPlayerShip = isPlayer;
+bool Board::allShipsSunk() const {
+    for (const Ship* ship : ships) {
+        if (!ship->isSunk()) return false;
+    }
+    return true;
+}
 
-       // Проверка, что корабль помещается на доску
-       if ((horizontal && x + shipSize > size) || (!horizontal && y + shipSize > size)) {
-           if (isPlayerShip) {
-               cout << "Ship extends beyond the board. Choose another position." << endl;
-           }
-           return false;
-       }
+bool Board::setShip(Ship* ship, int x, int y, bool horizontal, bool isPlayer) {
+    int shipSize = ship->getSize();
+    bool isPlayerShip = isPlayer;
 
-       // Проверка, что клетки не заняты другими кораблями и не касаются других кораблей
-       for (int i = 0; i < shipSize; i++) {
-           int newX = horizontal ? x + i : x;
-           int newY = horizontal ? y : y + i;
+    // Перевірка, що корабель поміщається на поле
+    if ((horizontal && x + shipSize > size) || (!horizontal && y + shipSize > size)) {
+        if (isPlayerShip) {
+            cout << "Ship extends beyond the board. Choose another position." << endl;
+        }
+        return false;
+    }
 
-           // Проверка самой клетки
-           if (board[newY][newX] != '.') {
-               if (isPlayerShip) {
-                   cout << "Cell (" << newX << "," << newY << ") is already occupied. Choose another position." << endl;
-               }
-               return false;
-           }
+    // Перевірка, що клітинки не зайняті іншими кораблями і не торкаються інших кораблів
+    for (int i = 0; i < shipSize; i++) {
+        int newX = horizontal ? x + i : x;
+        int newY = horizontal ? y : y + i;
 
-           // Проверка соседних клеток (по правилам игры корабли не могут касаться)
-           for (int dx = -1; dx <= 1; dx++) {
-               for (int dy = -1; dy <= 1; dy++) {
-                   int checkX = newX + dx;
-                   int checkY = newY + dy;
-                   if (checkX >= 0 && checkX < size && checkY >= 0 && checkY < size) {
-                       if (board[checkY][checkX] == 'S') {
-                           if (isPlayerShip) {
-                               cout << "Ships cannot touch each other. Choose another position." << endl;
-                           }
-                           return false;
-                       }
-                   }
-               }
-           }
-       }
+        // Перевірка самої клітинки
+        if (board[newY][newX] != '.') {
+            if (isPlayerShip) {
+                cout << "Cell (" << newX << "," << newY << ") is already occupied. Choose another position." << endl;
+            }
+            return false;
+        }
 
-       // Если все проверки пройдены, размещаем корабль
-       vector<pair<int, int>> coords;
-       for (int i = 0; i < shipSize; i++) {
-           int newX = horizontal ? x + i : x;
-           int newY = horizontal ? y : y + i;
-           coords.push_back({ newX, newY });      // (x, y)
-           board[newY][newX] = 'S';               // board[y][x]
-       }
+        // Перевірка сусідніх клітинок (за правилами гри кораблі не можуть торкатися)
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                int checkX = newX + dx;
+                int checkY = newY + dy;
+                if (checkX >= 0 && checkX < size && checkY >= 0 && checkY < size) {
+                    if (board[checkY][checkX] == 'S') {
+                        if (isPlayerShip) {
+                            cout << "Ships cannot touch each other. Choose another position." << endl;
+                        }
+                        return false;
+                    }
+                }
+            }
+        }
+    }
 
-       // Устанавливаем координаты в объекте корабля
-       ship->setCoordinates(coords);
+    // Якщо всі перевірки пройдені, розміщуємо корабель
+    vector<pair<int, int>> coords;
+    for (int i = 0; i < shipSize; i++) {
+        int newX = horizontal ? x + i : x;
+        int newY = horizontal ? y : y + i;
+        coords.push_back({ newX, newY });      // (x, y)
+        board[newY][newX] = 'S';               // board[y][x]
+    }
 
-       // Добавляем корабль в список кораблей доски
-       this->ships.push_back(ship);
+    // Встановлюємо координати в об'єкті корабля
+    ship->setCoordinates(coords);
 
-       return true;
-   }
+    // Додаємо корабель у список кораблів поля
+    this->ships.push_back(ship);
 
+    return true;
+}

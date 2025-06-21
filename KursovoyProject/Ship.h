@@ -5,18 +5,18 @@ using namespace std;
 
 class Ship {
 protected:
-    int size;         // Размер корабля
-    int health;       // Оставшееся количество частей корабля
-    vector<pair<int, int>> coordinates; // Координаты корабля
+    int size;         // Розмір корабля
+    int health;       // Залишилася кількість частин корабля
+    vector<pair<int, int>> coordinates; // Координати корабля
 
 public:
     Ship(int size);   // Конструктор корабля
 
-    int getSize() const;   // Получить размер
-    int getHealth() const; // Получить текущее здоровье
-    void hit();            // Получить урон (уменьшить здоровье)
-    bool isSunk() const;   // Проверка: корабль потоплен?
+    int getSize() const;   // Отримати розмір
+    int getHealth() const; // Отримати поточне здоров'я
+    void hit();            // Отримати ушкодження (зменшити здоров'я)
+    bool isSunk() const;   // Перевірка: корабель потоплений?
 
-    void setCoordinates(const vector<pair<int, int>>& coords); // Установить координаты
-    const vector<pair<int, int>>& getCoordinates() const;      // Получить координаты
+    void setCoordinates(const vector<pair<int, int>>& coords); // Встановити координати
+    const vector<pair<int, int>>& getCoordinates() const;      // Отримати координати
 };
