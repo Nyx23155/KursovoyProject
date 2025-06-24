@@ -1,11 +1,6 @@
 #include <iostream>
 #include <vector>
 #include "Ship.h"
-#include "FiveCellShip.h"
-#include "FourCellShip.h"
-#include "ThreeCellShip.h"
-#include "TwoCellShip.h"
-#include "OneCellShip.h"
 
 using namespace std;
 
