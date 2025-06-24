@@ -7,9 +7,10 @@ ComputerPlayer::ComputerPlayer(Board* board) {
     playerBoard = board;
 
     // Ініціалізація всіх можливих пострілів
-    for (int i = 0; i < board->getSize(); i++) {
-        for (int j = 0; j < board->getSize(); j++) {
-            availableShots.push_back({ j, i });
+    // Використовуємо координати (x, y) де x - колонка, y - рядок
+    for (int y = 0; y < board->getSize(); y++) {
+        for (int x = 0; x < board->getSize(); x++) {
+            availableShots.push_back({ x, y });
         }
     }
     // Випадкове перемішування для непередбачуваності
@@ -43,9 +44,12 @@ bool ComputerPlayer::makeMove() {
         return false;
     }
 
-    int x = target.first;
-    int y = target.second;
-    cout << "Computer shoots at (" << x << "," << y << ")" << endl;
+    int x = target.first;  // колонка
+    int y = target.second; // рядок
+
+    // Виводимо координати у форматі, що відповідає ігровому полю
+    char columnLetter = 'A' + x;
+    cout << "Computer shoots at (" << columnLetter << "," << (y + 1) << ")" << endl;
 
     bool hit = playerBoard->shoot(x, y);
 
@@ -87,16 +91,18 @@ void ComputerPlayer::placeShipsRandomly(Board& board, vector<Ship*>& npcShips) {
     for (Ship* ship : npcShips) {
         bool placed = false;
         while (!placed) {
-            int x, y;
+            int x = rand() % board.getSize();
+            int y = rand() % board.getSize();
             bool horizontal = rand() % 2 == 0;
-            if (horizontal) {
-                x = rand() % board.getSize();
-                y = rand() % board.getSize();
+
+            // Перевіряємо, чи корабель поміститься на дошці
+            if (horizontal && x + ship->getSize() > board.getSize()) {
+                continue;
             }
-            else {
-                x = rand() % (board.getSize() - ship->getSize() + 1);
-                y = rand() % board.getSize();
+            if (!horizontal && y + ship->getSize() > board.getSize()) {
+                continue;
             }
+
             placed = board.setShip(ship, x, y, horizontal, false);
         }
     }
@@ -106,8 +112,12 @@ void ComputerPlayer::addAdjacentCellsAsTargets(int x, int y) {
     int size = playerBoard->getSize();
 
     // Додаємо тільки валідні та ще не використані клітини
+    // Перевіряємо 4 сусідні клітини: вгору, вниз, вліво, вправо
     vector<pair<int, int>> candidates = {
-        {x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}
+        {x - 1, y}, // вліво
+        {x + 1, y}, // вправо
+        {x, y - 1}, // вгору
+        {x, y + 1}  // вниз
     };
 
     for (const auto& candidate : candidates) {
@@ -128,25 +138,59 @@ void ComputerPlayer::addAdjacentCellsAsTargets(int x, int y) {
 void ComputerPlayer::updateTargetsBasedOnDirection() {
     if (successfulHits.size() < 2) return;
 
-    int x1 = successfulHits[0].first;
-    int y1 = successfulHits[0].second;
-    int x2 = successfulHits[1].first;
-    int y2 = successfulHits[1].second;
+    // Беремо останні два влучання для визначення напрямку
+    int x1 = successfulHits[successfulHits.size() - 2].first;
+    int y1 = successfulHits[successfulHits.size() - 2].second;
+    int x2 = successfulHits[successfulHits.size() - 1].first;
+    int y2 = successfulHits[successfulHits.size() - 1].second;
 
-    if (x1 == x2) { // Вертикальний напрямок
-        if (y1 < y2) {
-            nextTargets.push_back({ x1, y2 + 1 });
+    // Очищаємо попередні цілі
+    nextTargets.clear();
+
+    if (x1 == x2) { // Вертикальний напрямок (той самий стовпець)
+        // Додаємо цілі на продовження лінії
+        int minY = min(y1, y2);
+        int maxY = max(y1, y2);
+
+        // Додаємо ціль вище мінімального y
+        if (minY - 1 >= 0) {
+            pair<int, int> target = { x1, minY - 1 };
+            auto it = find(availableShots.begin(), availableShots.end(), target);
+            if (it != availableShots.end()) {
+                nextTargets.push_back(target);
+            }
         }
-        else {
-            nextTargets.push_back({ x1, y2 - 1 });
+
+        // Додаємо ціль нижче максимального y
+        if (maxY + 1 < playerBoard->getSize()) {
+            pair<int, int> target = { x1, maxY + 1 };
+            auto it = find(availableShots.begin(), availableShots.end(), target);
+            if (it != availableShots.end()) {
+                nextTargets.push_back(target);
+            }
         }
     }
-    else if (y1 == y2) { // Горизонтальний напрямок
-        if (x1 < x2) {
-            nextTargets.push_back({ x2 + 1, y1 });
+    else if (y1 == y2) { // Горизонтальний напрямок (той самий рядок)
+        // Додаємо цілі на продовження лінії
+        int minX = min(x1, x2);
+        int maxX = max(x1, x2);
+
+        // Додаємо ціль лівіше мінімального x
+        if (minX - 1 >= 0) {
+            pair<int, int> target = { minX - 1, y1 };
+            auto it = find(availableShots.begin(), availableShots.end(), target);
+            if (it != availableShots.end()) {
+                nextTargets.push_back(target);
+            }
         }
-        else {
-            nextTargets.push_back({ x2 - 1, y1 });
+
+        // Додаємо ціль правіше максимального x
+        if (maxX + 1 < playerBoard->getSize()) {
+            pair<int, int> target = { maxX + 1, y1 };
+            auto it = find(availableShots.begin(), availableShots.end(), target);
+            if (it != availableShots.end()) {
+                nextTargets.push_back(target);
+            }
         }
     }
 }
@@ -168,7 +212,10 @@ pair<int, int> ComputerPlayer::generateTargetsAroundHit() {
 
     // Перевіряємо сусідні клітини і повертаємо першу доступну
     vector<pair<int, int>> candidates = {
-        {x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}
+        {x - 1, y}, // вліво
+        {x + 1, y}, // вправо
+        {x, y - 1}, // вгору
+        {x, y + 1}  // вниз
     };
 
     for (const auto& candidate : candidates) {

@@ -1,5 +1,8 @@
 #include <iostream>
 #include <vector>
+#include <string>
+#include <limits>
+#include <cctype>
 #include "Ship.h"
 #include "FourCellShip.h"
 #include "ThreeCellShip.h"
@@ -7,17 +10,137 @@
 #include "OneCellShip.h"
 #include "Board.h"
 #include "ComputerPlayer.h"
+#include "PlayerStats.h"
 #include <ctime>
 
 using namespace std;
 
 void printLegend() {
-    cout << "Legend: S - Ship, X - Hit, * - Miss, . - Empty" << endl;
+    cout << "Legend: S - Ship, X - Hit, * - Miss, . - Empty, # - Sunk, O - Around sunk" << endl;
+}
+
+// Функция для безопасного ввода числа
+int getValidIntInput(int min, int max) {
+    int input;
+    while (true) {
+        cin >> input;
+        if (cin.fail() || input < min || input > max) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number between " << min << " and " << max << ": ";
+        }
+        else {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return input;
+        }
+    }
+}
+
+// Функция для валидации имени игрока
+string getValidPlayerName() {
+    string name;
+    while (true) {
+        cout << "Enter your player name (letters and numbers only, 3-20 characters): ";
+        getline(cin, name);
+
+        if (name.length() < 3 || name.length() > 20) {
+            cout << "Name must be between 3 and 20 characters." << endl;
+            continue;
+        }
+
+        bool valid = true;
+        for (char c : name) {
+            if (!isalnum(c)) {
+                valid = false;
+                break;
+            }
+        }
+
+        if (valid) {
+            return name;
+        }
+        else {
+            cout << "Name can only contain letters and numbers." << endl;
+        }
+    }
+}
+
+// Функция для конвертации буквы в число (A=0, B=1, etc.)
+int letterToNumber(char letter) {
+    if (letter >= 'A' && letter <= 'J') {
+        return letter - 'A';
+    }
+    else if (letter >= 'a' && letter <= 'j') {
+        return letter - 'a';
+    }
+    return -1; // Неверная буква
+}
+
+// Функция для получения координат с проверкой
+pair<int, int> getValidCoordinates() {
+    char columnChar;
+    int row;
+
+    while (true) {
+        cout << "Enter column (A-J): ";
+        cin >> columnChar;
+
+        int column = letterToNumber(columnChar);
+        if (column == -1) {
+            cout << "Invalid column. Please enter a letter from A to J." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        cout << "Enter row (1-10): ";
+        row = getValidIntInput(1, 10);
+
+        return make_pair(column, row - 1); // Преобразуем в индексы массива (0-9)
+    }
+}
+
+// Функция для получения ориентации корабля
+bool getShipOrientation() {
+    char direction;
+    while (true) {
+        cout << "Orientation (h - horizontal, v - vertical): ";
+        cin >> direction;
+
+        if (direction == 'h' || direction == 'H') {
+            return true; // horizontal
+        }
+        else if (direction == 'v' || direction == 'V') {
+            return false; // vertical
+        }
+        else {
+            cout << "Invalid input. Please enter 'h' for horizontal or 'v' for vertical." << endl;
+        }
+    }
 }
 
 int main()
 {
     srand(static_cast<unsigned int>(time(0)));
+
+    cout << "========================================" << endl;
+    cout << "        Welcome to Battleship!" << endl;
+    cout << "========================================" << endl;
+
+    // Система логина
+    string playerName = getValidPlayerName();
+    PlayerStats playerStats(playerName);
+
+    bool isNewPlayer = !playerStats.loadFromFile();
+    if (isNewPlayer) {
+        cout << "Welcome, new player " << playerName << "!" << endl;
+    }
+    else {
+        cout << "Welcome back, " << playerName << "!" << endl;
+        playerStats.displayStats();
+    }
+
+    cout << endl;
 
     Board playerBoard;
     Board npcBoard;
@@ -48,27 +171,24 @@ int main()
         new OneCellShip()
     };
 
-    cout << "========================================" << endl;
-    cout << "        Welcome to Battleship!" << endl;
-    cout << "========================================" << endl;
     cout << "You will play against the computer." << endl;
-    cout << "Enter coordinates as numbers from 0 to 9." << endl;
+    cout << "Enter coordinates using columns A-J and rows 1-10." << endl;
     cout << "Good luck!" << endl << endl;
 
-    // Розміщення кораблів комп'ютера
+    // Размещение кораблей компьютера
     ComputerPlayer npc(&playerBoard);
     npc.placeShipsRandomly(npcBoard, npcShips);
     cout << "Computer has placed its ships." << endl << endl;
 
-    // Гравець обирає спосіб розміщення кораблів
+    // Игрок выбирает способ размещения кораблей
     cout << "Choose how your ships will be placed:" << endl;
     cout << "1 - Manual" << endl;
     cout << "2 - Random" << endl;
-    int placementChoice;
-    cin >> placementChoice;
+    cout << "Enter your choice (1-2): ";
+    int placementChoice = getValidIntInput(1, 2);
 
     if (placementChoice == 2) {
-        ComputerPlayer playerPlacer(&npcBoard); // дошка не використовується, лише для інтерфейсу
+        ComputerPlayer playerPlacer(&npcBoard); // доска не используется, только для интерфейса
         playerPlacer.placeShipsRandomly(playerBoard, playerShips);
         cout << "Your ships have been placed randomly!" << endl;
         playerBoard.printBoard();
@@ -82,22 +202,13 @@ int main()
         for (Ship* ship : playerShips) {
             bool placed = false;
             while (!placed) {
-                int x, y;
-                char direction;
                 cout << "Place a ship of size " << ship->getSize() << ":" << endl;
-                cout << "Enter X coordinate (0-9): ";
-                cin >> x;
-                cout << "Enter Y coordinate (0-9): ";
-                cin >> y;
-                cout << "Orientation (h - horizontal, v - vertical): ";
-                cin >> direction;
 
-                while (direction != 'h' && direction != 'H' && direction != 'v' && direction != 'V') {
-                    cout << "Invalid input. Please enter 'h' for horizontal or 'v' for vertical: ";
-                    cin >> direction;
-                }
+                pair<int, int> coords = getValidCoordinates();
+                int x = coords.first;
+                int y = coords.second;
 
-                bool horizontal = (direction == 'h' || direction == 'H');
+                bool horizontal = getShipOrientation();
 
                 placed = playerBoard.setShip(ship, x, y, horizontal, true);
                 if (placed) {
@@ -111,25 +222,24 @@ int main()
 
     bool gameOver = false;
     while (!gameOver) {
-        // Хід гравця - продовжуємо доки не промажемо
+        // Ход игрока - продолжаем пока не промахнемся
         bool playerHit = true;
         while (playerHit && !gameOver) {
             cout << "----------------------------------------" << endl;
             cout << "Your turn!" << endl;
             npcBoard.printBoardHidden();
             printLegend();
-            int x, y;
-            cout << "Enter X coordinate (0-9): ";
-            cin >> x;
-            cout << "Enter Y coordinate (0-9): ";
-            cin >> y;
+
+            pair<int, int> coords = getValidCoordinates();
+            int x = coords.first;
+            int y = coords.second;
 
             playerHit = npcBoard.shoot(x, y);
             if (playerHit) {
                 cout << "Result: Hit!" << endl;
                 if (npcBoard.isSunk(x, y)) {
                     cout << "Result: Ship sunk!" << endl;
-                    // Корабель вже позначено як потоплений у методі shoot()
+                    // Корабль уже отмечен как потопленный в методе shoot()
                 }
                 cout << "You hit! Take another shot!" << endl;
             }
@@ -137,9 +247,13 @@ int main()
                 cout << "Result: Miss!" << endl;
             }
 
-            // Перевірка, чи всі кораблі комп'ютера потоплені
+            // Проверка, потоплены ли все корабли компьютера
             if (npcBoard.allShipsSunk()) {
-                cout << "Congratulations! You win!" << endl;
+                cout << "========================================" << endl;
+                cout << "    Congratulations! You win!" << endl;
+                cout << "========================================" << endl;
+                playerStats.addWin();
+                playerStats.displayStats();
                 gameOver = true;
                 break;
             }
@@ -147,13 +261,13 @@ int main()
 
         if (gameOver) break;
 
-        // Хід комп'ютера - продовжуємо доки не промажемо
+        // Ход компьютера - продолжаем пока не промахнется
         bool npcHit = true;
         while (npcHit && !gameOver) {
             cout << "----------------------------------------" << endl;
             cout << "Computer's turn!" << endl;
 
-            // Робимо хід комп'ютера і отримуємо результат
+            // Делаем ход компьютера и получаем результат
             npcHit = npc.makeMove();
 
             playerBoard.printBoard();
@@ -163,15 +277,19 @@ int main()
                 cout << "Computer hit! Computer takes another shot!" << endl;
             }
 
-            // Перевірка, чи всі кораблі гравця потоплені
+            // Проверка, потоплены ли все корабли игрока
             if (playerBoard.allShipsSunk()) {
-                cout << "Sorry, you lose!" << endl;
+                cout << "========================================" << endl;
+                cout << "        Sorry, you lose!" << endl; 
+                cout << "========================================" << endl;
+                playerStats.addLoss();
+                playerStats.displayStats();
                 gameOver = true;
             }
         }
     }
 
-    // Очищення пам'яті
+    // Очистка памяти
     for (Ship* ship : playerShips) {
         delete ship;
     }
