@@ -19,10 +19,10 @@ int Ship::getHealth() const
 void Ship::hit() {
 	if (health > 0) health--;
 }
+
 bool Ship::isSunk() const {
 	return health == 0;
 }
-
 
 void Ship::setCoordinates(const vector<pair<int, int>>& coords)
 {

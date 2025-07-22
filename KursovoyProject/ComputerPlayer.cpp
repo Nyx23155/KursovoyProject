@@ -2,6 +2,7 @@
 #include "ComputerPlayer.h"
 #include "Board.h"
 #include "Ship.h"
+#include <random>
 
 ComputerPlayer::ComputerPlayer(Board* board) {
     playerBoard = board;
@@ -14,7 +15,9 @@ ComputerPlayer::ComputerPlayer(Board* board) {
         }
     }
     // Випадкове перемішування для непередбачуваності
-    random_shuffle(availableShots.begin(), availableShots.end());
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(availableShots.begin(), availableShots.end(), g);
 }
 
 bool ComputerPlayer::makeMove() {
